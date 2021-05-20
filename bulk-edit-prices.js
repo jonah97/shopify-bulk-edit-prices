@@ -79,6 +79,9 @@ function putProducts(editedProducts) {
                 if (i < editedProducts.length) {
                     req()
                 }
+                if (i == editedProducts.length) {
+                    console.log('updated all Products')
+                }
             } else {
                 console.error(err)
             }
