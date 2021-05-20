@@ -7,7 +7,7 @@ const options = {
     url: process.env.SHOPIFY_ACCESS_URL_PRODUCTS
 }
 
-let raisedAmount = 100
+let raisedAmount = 0
 
 function getProducts() {
     return new Promise((resolve, reject) => {
@@ -18,18 +18,27 @@ function getProducts() {
                 let products = []
 
                 class Product {
-                    constructor(id, variants) {
+                    constructor(id) {
                         this.id = id
-                        this.variants = variants
-                        this.prices = []
+                        this.variants = []
+                    }
+                }
+
+                class Variant {
+                    constructor(id, price) {
+                        this.id = id
+                        this.price = price
                     }
                 }
 
                 for (let i = 0; i < data.products.length; i++) {
-                    products.push(new Product(data.products[i].id, data.products[i].variants.length))
+                    products[i] = new Product(data.products[i].id)
 
                     for (let j = 0; j < data.products[i].variants.length; j++) {
-                        products[i].prices.push(parseFloat(data.products[i].variants[j].price))
+                        products[i].variants[j] = new Variant(
+                            data.products[i].variants[j].id,
+                            parseFloat(data.products[i].variants[j].price)
+                        )
                     }
                 }
                 resolve(products)
@@ -45,10 +54,35 @@ getProducts().catch((err) => {
 }).then((products) => {
 
     for (let i = 0; i < products.length; i++) {
-        for (let j = 0; j < products[i].prices.length; j++) {
-            products[i].prices[j] += raisedAmount
+        for (let j = 0; j < products[i].variants.length; j++) {
+            products[i].variants[j].price += raisedAmount
         }
     }
-
     console.log(products)
+    putProducts(products)
 })
+
+function putProducts(editedProducts) {
+
+    let i = 0
+
+    function req() {
+        const options = {
+            url: process.env.SHOPIFY_ACCESS_URL_UPDATE_PRODUCTS + editedProducts[i].id + '.json',
+            body: JSON.stringify(editedProducts[i])
+        }
+
+        request.put(options, (err, response) => {
+            if (!err && response.statusCode == 200) {
+                console.log(`successfully updated ${editedProducts[i].id}`)
+                i++
+                if (i < editedProducts.length) {
+                    req()
+                }
+            } else {
+                console.error(err)
+            }
+        })
+    }
+    req()
+}
