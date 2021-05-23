@@ -59,7 +59,7 @@ getProducts().catch((err) => {
         }
     }
     console.log(products)
-    putProducts(products)
+        // putProducts(products)
 })
 
 function putProducts(editedProducts) {
